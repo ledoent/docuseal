@@ -173,6 +173,8 @@ en: &en
   sign_in: Sign In
   signing_in: Signing In
   sign_in_with_microsoft: Sign in with Microsoft
+  user_not_found: User not found. Please contact your administrator.
+  authentication_failed: Authentication failed. Please try again.
   sign_in_with_google: Sign in with Google
   forgot_your_password_: Forgot your password?
   create_free_account: Create free account

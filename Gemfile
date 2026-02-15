@@ -25,6 +25,8 @@ gem 'jwt', require: false
 gem 'lograge'
 gem 'numo-narray-alt', require: false
 gem 'oj'
+gem 'omniauth-google-oauth2'
+gem 'omniauth-rails_csrf_protection'
 gem 'onnxruntime', require: false
 gem 'pagy'
 gem 'pg', require: false

@@ -69,6 +69,7 @@ class User < ApplicationRecord
   has_many :email_messages, dependent: :destroy, foreign_key: :author_id, inverse_of: :author
 
   devise :two_factor_authenticatable, :recoverable, :rememberable, :validatable, :trackable, :lockable
+  devise :omniauthable, omniauth_providers: [:google_oauth2] if ENV['GOOGLE_CLIENT_ID'].present?
 
   attribute :role, :string, default: ADMIN_ROLE
   attribute :uuid, :string, default: -> { SecureRandom.uuid }
