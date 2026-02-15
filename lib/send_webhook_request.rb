@@ -43,6 +43,8 @@ module SendWebhookRequest
         data: data
       }.to_json
 
+      sign_request(req, webhook_url)
+
       req.options.read_timeout = 15
       req.options.open_timeout = 8
     end
@@ -54,6 +56,16 @@ module SendWebhookRequest
     handle_error(webhook_event, attempt:, error_message: e.message&.truncate(100))
   end
   # rubocop:enable Metrics/AbcSize
+
+  def sign_request(req, webhook_url)
+    key = webhook_url.ensure_signing_key!
+    timestamp = Time.current.to_i.to_s
+    signature = OpenSSL::HMAC.hexdigest('SHA256', key, "#{timestamp}.#{req.body}")
+
+    req.headers['X-Webhook-Signature'] = "sha256=#{signature}"
+    req.headers['X-Webhook-Timestamp'] = timestamp
+    req.headers['X-Webhook-Request-Id'] = SecureRandom.uuid
+  end
 
   def create_webhook_event(webhook_url, event_uuid:, event_type:, record:)
     return if event_uuid.blank?

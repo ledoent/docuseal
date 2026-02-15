@@ -1,19 +1,52 @@
 <%= render 'shared/turbo_modal', title: t('webhook_secret') do %>
-  <%= form_for @webhook_url, url: webhook_secret_path, method: :patch, html: { class: 'space-y-4' }, data: { turbo_frame: :_top } do |f| %>
-    <div class="space-y-2">
-      <%= f.fields_for :secret, Struct.new(:key, :value).new(*@webhook_url.secret.to_a.first) do |ff| %>
-        <div class="form-control">
-          <%= ff.label :key, t('key'), class: 'label' %>
-          <%= ff.text_field :key, class: 'base-input', placeholder: 'X-Example-Header' %>
+  <div class="space-y-6">
+    <div class="bg-base-200 rounded-xl p-4 space-y-3">
+      <h3 class="font-semibold text-sm"><%= t('signature_verification') %></h3>
+      <p class="text-sm text-base-content/70">
+        <%= t('all_webhook_requests_are_signed_with_hmac_sha256') %>
+      </p>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text font-medium"><%= t('signing_key') %></span>
+        </label>
+        <div class="flex gap-2">
+          <input type="text" value="<%= @webhook_url.signing_key %>" class="base-input flex-1 font-mono text-xs" readonly>
+          <%= form_for @webhook_url, url: webhook_secret_path, method: :patch, data: { turbo_frame: :_top } do |f| %>
+            <%= hidden_field_tag :regenerate_signing_key, true %>
+            <%= f.button t('regenerate'), class: 'btn btn-sm btn-outline', data: { turbo_confirm: t('are_you_sure_') } %>
+          <% end %>
         </div>
-        <div class="form-control">
-          <%= ff.label :value, t('value'), class: 'label' %>
-          <%= ff.text_field :value, class: 'base-input' %>
-        </div>
-      <% end %>
+      </div>
+      <details class="text-xs text-base-content/60">
+        <summary class="cursor-pointer"><%= t('verification_example') %></summary>
+        <pre class="mt-2 p-3 bg-base-300 rounded-lg overflow-x-auto"><code># Verify webhook signature (Ruby example)
+signing_key = "<%= @webhook_url.signing_key %>"
+timestamp = request.headers["X-Webhook-Timestamp"]
+body = request.body.read
+expected = OpenSSL::HMAC.hexdigest("SHA256", signing_key, "#{timestamp}.#{body}")
+signature = request.headers["X-Webhook-Signature"].sub("sha256=", "")
+raise "Invalid signature" unless ActiveSupport::SecurityUtils.secure_compare(expected, signature)</code></pre>
+      </details>
     </div>
-    <div class="form-control pt-2">
-      <%= f.button button_title, class: 'base-button' %>
-    </div>
-  <% end %>
+
+    <div class="divider text-xs text-base-content/40"><%= t('custom_header') %></div>
+
+    <%= form_for @webhook_url, url: webhook_secret_path, method: :patch, html: { class: 'space-y-4' }, data: { turbo_frame: :_top } do |f| %>
+      <div class="space-y-2">
+        <%= f.fields_for :secret, Struct.new(:key, :value).new(*@webhook_url.secret.to_a.first) do |ff| %>
+          <div class="form-control">
+            <%= ff.label :key, t('key'), class: 'label' %>
+            <%= ff.text_field :key, class: 'base-input', placeholder: 'X-Example-Header' %>
+          </div>
+          <div class="form-control">
+            <%= ff.label :value, t('value'), class: 'label' %>
+            <%= ff.text_field :value, class: 'base-input' %>
+          </div>
+        <% end %>
+      </div>
+      <div class="form-control pt-2">
+        <%= f.button button_title, class: 'base-button' %>
+      </div>
+    <% end %>
+  </div>
 <% end %>

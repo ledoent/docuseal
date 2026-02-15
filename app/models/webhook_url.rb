@@ -46,10 +46,22 @@ class WebhookUrl < ApplicationRecord
   serialize :secret, coder: JSON
 
   before_validation :set_sha1
+  before_create :generate_signing_key
 
-  encrypts :url, :secret
+  encrypts :url, :secret, :signing_key
 
   def set_sha1
     self.sha1 = Digest::SHA1.hexdigest(url)
+  end
+
+  def generate_signing_key
+    self.signing_key ||= SecureRandom.hex(32)
+  end
+
+  def ensure_signing_key!
+    return signing_key if signing_key.present?
+
+    update!(signing_key: SecureRandom.hex(32))
+    signing_key
   end
 end

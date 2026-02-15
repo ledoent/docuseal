@@ -30,14 +30,22 @@ class SendTestWebhookRequestJob
       raise LocalhostError, "Can't send to localhost." if uri.host.in?(SendWebhookRequest::LOCALHOSTS)
     end
 
-    Faraday.post(webhook_url.url,
-                 {
-                   event_type: 'form.completed',
-                   timestamp: Time.current.iso8601,
-                   data: Submitters::SerializeForWebhook.call(submitter)
-                 }.to_json,
+    body = {
+      event_type: 'form.completed',
+      timestamp: Time.current.iso8601,
+      data: Submitters::SerializeForWebhook.call(submitter)
+    }.to_json
+
+    key = webhook_url.ensure_signing_key!
+    timestamp = Time.current.to_i.to_s
+    signature = OpenSSL::HMAC.hexdigest('SHA256', key, "#{timestamp}.#{body}")
+
+    Faraday.post(webhook_url.url, body,
                  'Content-Type' => 'application/json',
                  'User-Agent' => USER_AGENT,
+                 'X-Webhook-Signature' => "sha256=#{signature}",
+                 'X-Webhook-Timestamp' => timestamp,
+                 'X-Webhook-Request-Id' => SecureRandom.uuid,
                  **webhook_url.secret.to_h)
   end
 end

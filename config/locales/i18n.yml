@@ -705,6 +705,12 @@ en: &en
   key: Key
   value: Value
   webhook_secret: Webhook Secret
+  signature_verification: Signature Verification
+  all_webhook_requests_are_signed_with_hmac_sha256: All webhook requests are signed with HMAC-SHA256. Use the signing key below to verify authenticity.
+  signing_key: Signing Key
+  regenerate: Regenerate
+  verification_example: Verification example
+  custom_header: Custom Header
   author: Author
   to: To
   created_at: Created at
