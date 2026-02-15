@@ -5,7 +5,7 @@ on:
     tags:
       - "*.*.*"
     branches:
-      - feature/google-oauth-login
+      - kencove
 
 permissions:
   contents: read
@@ -53,7 +53,7 @@ jobs:
         tags: |
           type=semver,pattern={{version}}
           type=sha,prefix=,format=short
-          type=raw,value=latest,enable={{is_default_branch}}
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/kencove' }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
