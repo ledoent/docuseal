@@ -74,7 +74,7 @@ class SubmitFormController < ApplicationController
 
     head :ok
   rescue Submitters::SubmitValues::RequiredFieldError => e
-    Rollbar.warning("Required field #{@submitter.id}: #{e.message}") if defined?(Rollbar)
+    Rails.logger.warn("Required field #{@submitter.id}: #{e.message}")
 
     render json: { field_uuid: e.message }, status: :unprocessable_content
   rescue Submitters::SubmitValues::ValidationError => e

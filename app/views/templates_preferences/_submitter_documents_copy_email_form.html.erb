@@ -30,7 +30,7 @@
           <%= ff.text_area :documents_copy_email_body, required: true, class: 'base-input w-full py-2 !rounded-2xl', dir: 'auto' %>
         </autoresize-textarea>
       </div>
-      <% if can?(:manage, :reply_to) %>
+      <% if true %>
         <div class="form-control">
           <%= ff.label :documents_copy_email_reply_to, t('reply_to'), class: 'label' %>
           <%= ff.email_field :documents_copy_email_reply_to, class: 'base-input', dir: 'auto', placeholder: t(:email) %>

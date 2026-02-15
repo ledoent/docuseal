@@ -80,7 +80,7 @@
       </div>
     <% end %>
   <% end %>
-  <% if can?(:manage, :personalization_advanced) %>
+  <% if true %>
     <%= form_for template, url: template_preferences_path(template), method: :post, html: { autocomplete: 'off', class: 'mt-2' }, data: { close_on_submit: false } do |f| %>
       <div class="flex items-center mt-4 justify-between w-full">
         <span>

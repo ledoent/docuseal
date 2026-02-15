@@ -112,7 +112,7 @@ module Templates
     rescue StandardError => e
       raise if Rails.env.local?
 
-      Rollbar.error(e) if defined?(Rollbar)
+      Rails.logger.error(e)
 
       []
     end

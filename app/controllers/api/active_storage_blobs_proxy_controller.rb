@@ -14,7 +14,7 @@ module Api
       blob_uuid, purp, exp = ApplicationRecord.signed_id_verifier.verified(params[:signed_uuid])
 
       if blob_uuid.blank? || purp != 'blob'
-        Rollbar.error('Blob not found') if defined?(Rollbar)
+        Rails.logger.error('Blob not found')
 
         return head :not_found
       end
@@ -57,7 +57,7 @@ module Api
         return if !require_ttl && !require_auth
       end
 
-      Rollbar.error('Blob unauthorized') if defined?(Rollbar)
+      Rails.logger.error('Blob unauthorized')
 
       raise CanCan::AccessDenied
     end

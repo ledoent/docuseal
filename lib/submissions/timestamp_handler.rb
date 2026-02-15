@@ -44,7 +44,7 @@ module Submissions
       if response.status != 200 || response.body.blank?
         raise TimestampError if tsa_fallback_url.blank?
 
-        Rollbar.error('TimestampError: use fallback URL') if defined?(Rollbar)
+        Rails.logger.error('TimestampError: use fallback URL')
 
         response = Faraday.post(tsa_fallback_url, build_payload(digest.digest),
                                 'content-type' => 'application/timestamp-query')
@@ -54,7 +54,6 @@ module Submissions
 
       OpenSSL::Timestamp::Response.new(response.body).token.to_der
     rescue StandardError => e
-      Rollbar.error(e) if defined?(Rollbar)
       Rails.logger.error(e)
 
       OpenSSL::ASN1::GeneralizedTime.new(Time.now.utc).to_der

@@ -90,7 +90,7 @@ module Submitters
 
         raise RequiredFieldError, uuid if validate_required
 
-        Rollbar.warning("Required field #{submitter.id}: #{uuid}") if defined?(Rollbar)
+        Rails.logger.warn("Required field #{submitter.id}: #{uuid}")
       end
 
       submitter

@@ -74,7 +74,7 @@ module Api
       render json: Submitters::SerializeForApi.call(@submitter, with_template: false, with_urls: true,
                                                                 with_events: false, params:)
     rescue Submitters::NormalizeValues::BaseError, DownloadUtils::UnableToDownload => e
-      Rollbar.warning(e) if defined?(Rollbar)
+      Rails.logger.warn(e)
 
       render json: { error: e.message }, status: :unprocessable_content
     end

@@ -30,7 +30,7 @@ module Templates
         attachment = schema_documents.find { |e| e.uuid == item['attachment_uuid'] }
 
         unless attachment
-          Rollbar.error("Documents missing: #{template.id}") if defined?(Rollbar)
+          Rails.logger.error("Documents missing: #{template.id}")
 
           next
         end
