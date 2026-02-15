@@ -13,7 +13,7 @@ module SendWebhookRequest
 
   module_function
 
-  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def call(webhook_url, event_uuid:, event_type:, record:, data:, attempt: 0)
     uri = begin
       URI(webhook_url.url)
@@ -55,7 +55,7 @@ module SendWebhookRequest
   rescue Faraday::Error => e
     handle_error(webhook_event, attempt:, error_message: e.message&.truncate(100))
   end
-  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
   def sign_request(req, webhook_url)
     key = webhook_url.ensure_signing_key!
