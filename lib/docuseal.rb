@@ -4,7 +4,7 @@ module Docuseal
   URL_CACHE = ActiveSupport::Cache::MemoryStore.new
   PRODUCT_URL = 'https://www.docuseal.com'
   PRODUCT_EMAIL_URL = ENV.fetch('PRODUCT_EMAIL_URL', PRODUCT_URL)
-  PRODUCT_NAME = 'DocuSeal'
+  PRODUCT_NAME = 'Kencove eSign'
   DEFAULT_APP_URL = ENV.fetch('APP_URL', 'http://localhost:3000')
   GITHUB_URL = 'https://github.com/docusealco/docuseal'
   DISCORD_URL = 'https://discord.gg/qygYCDGck9'
