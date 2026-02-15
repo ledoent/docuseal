@@ -1,1 +1,20 @@
-<%= render 'logo_placeholder' %>
+<% config = AccountConfigs.find_or_initialize_for_key(current_account, AccountConfig::COMPANY_LOGO_URL_KEY) %>
+<%= form_for config, url: settings_personalization_path, method: :post, html: { autocomplete: 'off', class: 'space-y-4' } do |f| %>
+  <%= f.hidden_field :key %>
+  <div class="form-control">
+    <%= f.label :value, t('your_company_logo'), class: 'label' %>
+    <%= f.url_field :value, class: 'base-input', placeholder: 'https://example.com/logo.png', autocomplete: 'off' %>
+    <label class="label">
+      <span class="label-text-alt"><%= t('display_your_company_name_and_logo_when_signing_documents') %></span>
+    </label>
+  </div>
+  <% if config.value.present? %>
+    <div class="flex items-center space-x-4 p-4 bg-base-200 rounded-xl">
+      <img src="<%= config.value %>" alt="Company Logo" class="max-h-16 max-w-48 object-contain" />
+      <span class="text-sm text-base-content/60"><%= t('current_logo') rescue 'Current logo' %></span>
+    </div>
+  <% end %>
+  <div class="form-control pt-2">
+    <%= f.button button_title(title: t('save'), disabled_with: t('saving')), class: 'base-button' %>
+  </div>
+<% end %>
