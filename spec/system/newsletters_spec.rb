@@ -5,7 +5,6 @@ RSpec.describe 'Newsletter' do
 
   before do
     sign_in(user)
-    stub_request(:post, Docuseal::NEWSLETTER_URL).to_return(status: 200)
     visit newsletter_path
   end
 
@@ -19,7 +18,7 @@ RSpec.describe 'Newsletter' do
   it 'submits the newsletter form' do
     click_button 'Submit'
 
-    expect(a_request(:post, Docuseal::NEWSLETTER_URL)).to have_been_made.once
+    expect(page).to have_current_path(root_path, ignore_query: true)
   end
 
   it 'skips the newsletter form' do

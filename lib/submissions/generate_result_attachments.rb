@@ -277,7 +277,7 @@ module Submissions
             begin
               page.flatten_annotations
             rescue StandardError => e
-              Rollbar.error(e) if defined?(Rollbar)
+              Rails.logger.error(e)
             end
           end
 
@@ -531,7 +531,7 @@ module Submissions
 
                   Array.wrap(value).include?(option_name)
                 else
-                  Rollbar.error("Invalid option: #{field['uuid']}") if defined?(Rollbar)
+                  Rails.logger.error("Invalid option: #{field['uuid']}")
 
                   false
                 end
@@ -731,7 +731,7 @@ module Submissions
         begin
           pdf.sign(io, write_options: { validate: false }, **sign_params)
         rescue HexaPDF::Error, NoMethodError => e
-          Rollbar.error(e) if defined?(Rollbar)
+          Rails.logger.error(e)
 
           begin
             pdf.sign(io, write_options: { validate: false, incremental: false }, **sign_params)
@@ -746,7 +746,7 @@ module Submissions
         begin
           pdf.write(io, incremental: true, validate: false)
         rescue HexaPDF::Error, NoMethodError => e
-          Rollbar.error(e) if defined?(Rollbar)
+          Rails.logger.error(e)
 
           begin
             pdf.write(io, incremental: false, validate: false)
@@ -831,7 +831,7 @@ module Submissions
     rescue HexaPDF::MissingGlyphError
       nil
     rescue StandardError => e
-      Rollbar.error(e) if defined?(Rollbar)
+      Rails.logger.error(e)
     end
 
     def maybe_rotate_pdf(pdf)
@@ -853,13 +853,13 @@ module Submissions
 
       HexaPDF::Document.new(io:)
     rescue StandardError => e
-      Rollbar.error(e) if defined?(Rollbar)
+      Rails.logger.error(e)
 
       pdf
     end
 
     def on_missing_glyph(character, font_wrapper)
-      Rails.logger.info("Missing glyph: #{character}") if character.present? && defined?(Rollbar)
+      Rails.logger.info("Missing glyph: #{character}") if character.present?
 
       replace_with =
         if font_wrapper.font_type == :Type1

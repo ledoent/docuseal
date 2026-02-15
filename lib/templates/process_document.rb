@@ -156,7 +156,7 @@ module Templates
 
       blob
     rescue Vips::Error, Pdfium::PdfiumError => e
-      Rollbar.warning(e) if defined?(Rollbar)
+      Rails.logger.warn(e)
 
       nil
     ensure

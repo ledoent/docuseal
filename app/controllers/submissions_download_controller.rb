@@ -28,7 +28,7 @@ class SubmissionsDownloadController < ApplicationController
     Submissions::EnsureResultGenerated.call(last_submitter)
 
     if last_submitter.completed_at < TTL.ago && !signature_valid && !current_user_submitter?(last_submitter)
-      Rollbar.info("TTL: #{last_submitter.id}") if defined?(Rollbar)
+      Rails.logger.info("TTL: #{last_submitter.id}")
 
       return head :not_found
     end

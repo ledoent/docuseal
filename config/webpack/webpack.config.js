@@ -13,9 +13,7 @@ const configs = generateWebpackConfig({
     runtimeChunk: false,
     concatenateModules: !process.env.BUNDLE_ANALYZE,
     splitChunks: {
-      chunks (chunk) {
-        return chunk.name !== 'rollbar'
-      },
+      chunks: 'all',
       cacheGroups: {
         default: false,
         applicationVendors: {

@@ -28,24 +28,20 @@ class ApplicationController < ActionController::Base
   end
 
   rescue_from RateLimit::LimitApproached do |e|
-    Rollbar.error(e) if defined?(Rollbar)
+    Rails.logger.error(e)
 
     redirect_to request.referer, alert: 'Too many requests', status: :too_many_requests
   end
 
   if Rails.env.production? || Rails.env.test?
     rescue_from CanCan::AccessDenied do |e|
-      Rollbar.warning(e) if defined?(Rollbar)
+      Rails.logger.warn(e)
 
       redirect_to root_path, alert: e.message
     end
   end
 
   def default_url_options
-    if request.domain == 'docuseal.com'
-      return { host: 'docuseal.com', protocol: ENV['FORCE_SSL'].present? ? 'https' : 'http' }
-    end
-
     Docuseal.default_url_options
   end
 
@@ -125,11 +121,7 @@ class ApplicationController < ActionController::Base
     Docuseal.default_url_options[:host]
   end
 
-  def maybe_redirect_com
-    return if request.domain != 'docuseal.co'
-
-    redirect_to request.url.gsub('.co/', '.com/'), allow_other_host: true, status: :moved_permanently
-  end
+  def maybe_redirect_com; end
 
   def set_csp
     request.content_security_policy = current_content_security_policy.tap do |policy|

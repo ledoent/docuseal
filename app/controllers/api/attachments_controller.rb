@@ -14,13 +14,13 @@ module Api
         image = Vips::Image.new_from_file(params[:file].path)
 
         if ImageUtils.blank?(image)
-          Rollbar.error("Empty signature: #{submitter.id}") if defined?(Rollbar)
+          Rails.logger.error("Empty signature: #{submitter.id}")
 
           return render json: { error: "#{params[:type]} is empty" }, status: :unprocessable_content
         end
 
         if ImageUtils.error?(image)
-          Rollbar.error("Error signature: #{submitter.id}") if defined?(Rollbar)
+          Rails.logger.error("Error signature: #{submitter.id}")
 
           return render json: { error: "#{params[:type]} error, try to sign on another device" },
                         status: :unprocessable_content
@@ -35,7 +35,7 @@ module Api
 
       render json: attachment.as_json(only: %i[uuid created_at], methods: %i[url filename content_type])
     rescue Submitters::MaliciousFileExtension => e
-      Rollbar.error(e) if defined?(Rollbar)
+      Rails.logger.error(e)
 
       render json: { error: e.message }, status: :unprocessable_content
     end
