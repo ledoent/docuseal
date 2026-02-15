@@ -353,6 +353,8 @@ en: &en
   but_not_activated: but not activated
   email_has_been_sent: Email has been sent.
   email_has_been_sent_already: Email has been sent already.
+  sms_has_been_sent: SMS has been sent.
+  sms_has_been_sent_already: SMS has been sent already.
   initial_setup: Initial Setup
   demo_environment: Demo Environment
   close: Close
@@ -644,6 +646,8 @@ en: &en
   send_email_copy_with_completed_documents_to_a_specified_bcc_address: Send email copy with completed documents to a specified BCC address.
   re_send_email: Re-send Email
   send_email: Send Email
+  re_send_sms: Re-send SMS
+  send_sms: Send SMS
   copy_share_link: Copy Share Link
   copied_to_clipboard: Copied to Clipboard
   link: Link

@@ -173,6 +173,10 @@ module Accounts
      *Docuseal.trusted_certs]
   end
 
+  def can_send_sms?(account)
+    EncryptedConfig.exists?(account:, key: EncryptedConfig::SMS_KEY)
+  end
+
   def can_send_emails?(_account, **_params)
     return true if Docuseal.multitenant?
     return true if ENV['SMTP_ADDRESS'].present?

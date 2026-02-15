@@ -57,6 +57,7 @@ class AccountConfig < ApplicationRecord
   TEMPLATE_CUSTOM_FIELDS_KEY = 'template_custom_fields'
   POLICY_LINKS_KEY = 'policy_links'
   COMPANY_LOGO_URL_KEY = 'company_logo_url'
+  SUBMITTER_INVITATION_SMS_KEY = 'submitter_invitation_sms'
 
   DEFAULT_VALUES = {
     SUBMITTER_INVITATION_EMAIL_KEY => lambda {
@@ -82,6 +83,9 @@ class AccountConfig < ApplicationRecord
         'subject' => I18n.t(:your_document_copy),
         'body' => I18n.t(:submitter_documents_copy_email_body)
       }
+    },
+    SUBMITTER_INVITATION_SMS_KEY => lambda {
+      'You are invited to sign "{template.name}". Open the document: {submitter.link}'
     }
   }.freeze
 

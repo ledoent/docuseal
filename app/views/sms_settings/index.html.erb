@@ -2,7 +2,26 @@
   <%= render 'shared/settings_nav' %>
   <div class="flex-grow max-w-xl mx-auto">
     <h1 class="text-4xl font-bold mb-4">SMS</h1>
-    <%= render 'placeholder' %>
+    <% value = @encrypted_config.value || {} %>
+    <%= form_for @encrypted_config, url: settings_sms_index_path, method: :post, html: { autocomplete: 'off', class: 'space-y-4' } do |f| %>
+      <%= f.fields_for :value do |ff| %>
+        <div class="form-control">
+          <%= ff.label :account_sid, 'Twilio Account SID', class: 'label' %>
+          <%= ff.text_field :account_sid, value: value['account_sid'], required: true, class: 'base-input' %>
+        </div>
+        <div class="form-control">
+          <%= ff.label :auth_token, 'Twilio Auth Token', class: 'label' %>
+          <%= ff.password_field :auth_token, value: value['auth_token'], required: true, class: 'base-input' %>
+        </div>
+        <div class="form-control">
+          <%= ff.label :from_number, 'From Phone Number', class: 'label' %>
+          <%= ff.text_field :from_number, value: value['from_number'], required: true, placeholder: '+1234567890', class: 'base-input' %>
+        </div>
+      <% end %>
+      <div class="form-control pt-2">
+        <%= f.button button_title(title: t('save'), disabled_with: t('saving')), class: 'base-button' %>
+      </div>
+    <% end %>
   </div>
   <div class="w-0 md:w-52"></div>
 </div>
