@@ -335,10 +335,13 @@ Devise.setup do |config|
   # config.sign_in_after_change_password = true
 
   if ENV['GOOGLE_CLIENT_ID'].present?
+    oauth_opts = {}
+    oauth_opts[:hd] = ENV['GOOGLE_ALLOWED_DOMAIN'] if ENV['GOOGLE_ALLOWED_DOMAIN'].present?
+
     config.omniauth :google_oauth2,
                     ENV.fetch('GOOGLE_CLIENT_ID'),
                     ENV.fetch('GOOGLE_CLIENT_SECRET'),
-                    { hd: 'kencove.com' }
+                    oauth_opts
   end
 
   ActiveSupport.run_load_hooks(:devise_config, config)
