@@ -129,6 +129,11 @@ export default {
       required: false,
       default: false
     },
+    fetchOptions: {
+      type: Object,
+      required: false,
+      default: () => ({})
+    },
     completedButton: {
       type: Object,
       required: false,
@@ -182,7 +187,10 @@ export default {
     download () {
       this.isDownloading = true
 
-      fetch(this.baseUrl + `/submitters/${this.submitterSlug}/download`).then(async (response) => {
+      fetch(this.baseUrl + `/submitters/${this.submitterSlug}/download`, {
+        method: 'GET',
+        ...this.fetchOptions
+      }).then(async (response) => {
         if (response.ok) {
           const urls = await response.json()
           const isMobileSafariIos = 'ontouchstart' in window && navigator.maxTouchPoints > 0 && /AppleWebKit/i.test(navigator.userAgent)

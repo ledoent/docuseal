@@ -27,20 +27,18 @@ class SubmissionsDownloadController < ApplicationController
 
     Submissions::EnsureResultGenerated.call(last_submitter)
 
-    if last_submitter.completed_at < TTL.ago && !signature_valid && !current_user_submitter?(last_submitter)
-      Rails.logger.info("TTL: #{last_submitter.id}")
+    if !signature_valid && !current_user_submitter?(last_submitter)
+      return head :not_found unless Submitters::AuthorizedForForm.call(@submitter, current_user, request)
 
-      return head :not_found
+      if last_submitter.completed_at < TTL.ago
+        Rails.logger.info("TTL: #{last_submitter.id}")
+
+        return head :not_found
+      end
     end
 
     if params[:combined] == 'true'
-      url = build_combined_url(@submitter)
-
-      if url
-        render json: [url]
-      else
-        head :not_found
-      end
+      respond_with_combined(last_submitter)
     else
       render json: build_urls(last_submitter)
     end
@@ -48,8 +46,18 @@ class SubmissionsDownloadController < ApplicationController
 
   private
 
+  def respond_with_combined(submitter)
+    url = build_combined_url(submitter)
+
+    if url
+      render json: [url]
+    else
+      head :not_found
+    end
+  end
+
   def current_user_submitter?(submitter)
-    current_user && current_user.account.submitters.exists?(id: submitter.id)
+    current_user && current_ability.can?(:read, submitter)
   end
 
   def build_urls(submitter)
@@ -57,7 +65,7 @@ class SubmissionsDownloadController < ApplicationController
                                                           key: AccountConfig::DOCUMENT_FILENAME_FORMAT_KEY)&.value
 
     Submitters.select_attachments_for_download(submitter).map do |attachment|
-      ActiveStorage::Blob.proxy_url(
+      ActiveStorage::Blob.proxy_path(
         attachment.blob,
         expires_at: FILES_TTL.from_now.to_i,
         filename: Submitters.build_document_filename(submitter, attachment.blob, filename_format)
@@ -75,7 +83,7 @@ class SubmissionsDownloadController < ApplicationController
     filename_format = AccountConfig.find_or_initialize_by(account_id: submitter.account_id,
                                                           key: AccountConfig::DOCUMENT_FILENAME_FORMAT_KEY)&.value
 
-    ActiveStorage::Blob.proxy_url(
+    ActiveStorage::Blob.proxy_path(
       attachment.blob,
       expires_at: FILES_TTL.from_now.to_i,
       filename: Submitters.build_document_filename(submitter, attachment.blob, filename_format)
