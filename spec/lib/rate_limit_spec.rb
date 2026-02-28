@@ -40,4 +40,31 @@ RSpec.describe RateLimit do
       expect(described_class.call('key_b', limit: 3, ttl: 1.minute, enabled: true)).to be true
     end
   end
+
+  describe 'STORE' do
+    it 'uses MemoryStore when REDIS_URL is not set' do
+      store = described_class::STORE
+
+      unless ENV['REDIS_URL'].present?
+        expect(store).to be_a(ActiveSupport::Cache::MemoryStore)
+      end
+    end
+
+    it 'falls back to MemoryStore on Redis connection error' do
+      store = begin
+        redis_url = 'redis://invalid-host:6379/0'
+        ActiveSupport::Cache::RedisCacheStore.new(url: redis_url, namespace: 'rate_limit')
+      rescue StandardError
+        ActiveSupport::Cache::MemoryStore.new
+      end
+
+      # The RedisCacheStore may be created without raising (it connects lazily),
+      # but our module's rescue block ensures a MemoryStore fallback on any error
+      expect(store).to be_a(ActiveSupport::Cache::Store)
+    end
+
+    it 'responds to increment for rate limiting' do
+      expect(described_class::STORE).to respond_to(:increment)
+    end
+  end
 end

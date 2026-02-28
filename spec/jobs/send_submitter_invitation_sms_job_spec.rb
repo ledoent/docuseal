@@ -122,5 +122,17 @@ RSpec.describe SendSubmitterInvitationSmsJob do
         }.to change(described_class.jobs, :size).by(1)
       end
     end
+
+    context 'when connection fails' do
+      before do
+        stub_request(:post, twilio_url).to_raise(Faraday::ConnectionFailed.new('Connection refused'))
+      end
+
+      it 'schedules a retry' do
+        expect {
+          described_class.new.perform('submitter_id' => submitter.id)
+        }.to change(described_class.jobs, :size).by(1)
+      end
+    end
   end
 end
