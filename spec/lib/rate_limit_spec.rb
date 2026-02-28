@@ -15,9 +15,9 @@ RSpec.describe RateLimit do
     it 'raises LimitApproached when limit is exceeded' do
       3.times { described_class.call('test_key', limit: 3, ttl: 1.minute, enabled: true) }
 
-      expect {
+      expect do
         described_class.call('test_key', limit: 3, ttl: 1.minute, enabled: true)
-      }.to raise_error(RateLimit::LimitApproached)
+      end.to raise_error(RateLimit::LimitApproached)
     end
 
     it 'resets after TTL expires' do
@@ -45,9 +45,7 @@ RSpec.describe RateLimit do
     it 'uses MemoryStore when REDIS_URL is not set' do
       store = described_class::STORE
 
-      unless ENV['REDIS_URL'].present?
-        expect(store).to be_a(ActiveSupport::Cache::MemoryStore)
-      end
+      expect(store).to be_a(ActiveSupport::Cache::MemoryStore) if ENV['REDIS_URL'].blank?
     end
 
     it 'falls back to MemoryStore on Redis connection error' do

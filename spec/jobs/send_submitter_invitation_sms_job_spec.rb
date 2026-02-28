@@ -83,9 +83,9 @@ RSpec.describe SendSubmitterInvitationSmsJob do
       end
 
       it 'schedules a retry with incremented attempt' do
-        expect {
+        expect do
           described_class.new.perform('submitter_id' => submitter.id)
-        }.to change(described_class.jobs, :size).by(1)
+        end.to change(described_class.jobs, :size).by(1)
 
         job = described_class.jobs.last
         expect(job['args'].first['attempt']).to eq(1)
@@ -105,9 +105,9 @@ RSpec.describe SendSubmitterInvitationSmsJob do
       end
 
       it 'does not schedule another retry' do
-        expect {
+        expect do
           described_class.new.perform('submitter_id' => submitter.id, 'attempt' => 4)
-        }.not_to change(described_class.jobs, :size)
+        end.not_to change(described_class.jobs, :size)
       end
     end
 
@@ -117,9 +117,9 @@ RSpec.describe SendSubmitterInvitationSmsJob do
       end
 
       it 'schedules a retry' do
-        expect {
+        expect do
           described_class.new.perform('submitter_id' => submitter.id)
-        }.to change(described_class.jobs, :size).by(1)
+        end.to change(described_class.jobs, :size).by(1)
       end
     end
 
@@ -129,9 +129,9 @@ RSpec.describe SendSubmitterInvitationSmsJob do
       end
 
       it 'schedules a retry' do
-        expect {
+        expect do
           described_class.new.perform('submitter_id' => submitter.id)
-        }.to change(described_class.jobs, :size).by(1)
+        end.to change(described_class.jobs, :size).by(1)
       end
     end
   end
