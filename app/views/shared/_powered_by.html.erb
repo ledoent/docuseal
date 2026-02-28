@@ -1,3 +1,4 @@
+<% unless Docuseal.remove_branding? %>
 <div class="text-center px-2">
   <% if local_assigns[:with_counter] %>
     <% count = CompletedSubmitter.distinct.count(:submission_id) %>
@@ -11,3 +12,4 @@
   <% end %>
   <a href="<%= Docuseal::PRODUCT_URL %><%= local_assigns[:link_path] %>" class="underline"><%= Docuseal.product_name %></a> - <%= t('open_source_documents_software') %>
 </div>
+<% end %>
