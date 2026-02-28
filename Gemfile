@@ -36,6 +36,7 @@ gem 'puma', require: false
 gem 'rack'
 gem 'rails'
 gem 'rails-i18n'
+gem 'redis'
 gem 'rotp'
 gem 'rouge', require: false
 gem 'rqrcode', require: false
