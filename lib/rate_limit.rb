@@ -3,7 +3,16 @@
 module RateLimit
   LimitApproached = Class.new(StandardError)
 
-  STORE = ActiveSupport::Cache::MemoryStore.new
+  STORE = begin
+    redis_url = ENV.fetch('REDIS_URL', nil)
+    if redis_url.present?
+      ActiveSupport::Cache::RedisCacheStore.new(url: redis_url, namespace: 'rate_limit')
+    else
+      ActiveSupport::Cache::MemoryStore.new
+    end
+  rescue StandardError
+    ActiveSupport::Cache::MemoryStore.new
+  end
 
   module_function
 
