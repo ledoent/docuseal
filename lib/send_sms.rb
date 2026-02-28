@@ -17,15 +17,20 @@ module SendSms
 
     conn.basic_auth(account_sid, auth_token)
 
-    response = conn.post(url, { 'To' => to, 'From' => from_number, 'Body' => body })
+    response = conn.post(url, { 'To' => to, 'From' => from_number, 'Body' => body }) do |req|
+      req.options.open_timeout = 8
+      req.options.read_timeout = 15
+    end
 
-    return if response.success?
+    return JSON.parse(response.body) if response.success?
 
     parsed = JSON.parse(response.body)
     message = parsed['message'] || response.body
 
     raise SmsError, message
   rescue JSON::ParserError
-    raise SmsError, response.body
+    return {} if response&.success?
+
+    raise SmsError, response&.body
   end
 end
