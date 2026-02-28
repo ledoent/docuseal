@@ -44,7 +44,13 @@ module Docuseal
     protocol: ENV['FORCE_SSL'].present? ? 'https' : 'http'
   }.freeze
 
+  REMOVE_BRANDING = ENV['REMOVE_BRANDING'] == 'true'
+
   module_function
+
+  def remove_branding?
+    REMOVE_BRANDING
+  end
 
   def version
     @version ||=
