@@ -879,12 +879,12 @@ export default {
     withFormula: {
       type: Boolean,
       required: false,
-      default: false
+      default: true
     },
     withConditions: {
       type: Boolean,
       required: false,
-      default: false
+      default: true
     },
     withGoogleDrive: {
       type: Boolean,
