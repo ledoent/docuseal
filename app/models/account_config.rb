@@ -30,6 +30,7 @@ class AccountConfig < ApplicationRecord
   ALLOW_TYPED_SIGNATURE = 'allow_typed_signature'
   ALLOW_TO_RESUBMIT = 'allow_to_resubmit'
   ALLOW_TO_DECLINE_KEY = 'allow_to_decline'
+  ALLOW_TO_DELEGATE_KEY = 'allow_to_delegate'
   ALLOW_TO_PARTIAL_DOWNLOAD_KEY = 'allow_to_partial_download'
   SUBMITTER_REMINDERS = 'submitter_reminders'
   ENFORCE_SIGNING_ORDER_KEY = 'enforce_signing_order'
@@ -42,6 +43,7 @@ class AccountConfig < ApplicationRecord
   DOWNLOAD_LINKS_EXPIRE_KEY = 'download_links_expire'
   FORCE_SSO_AUTH_KEY = 'force_sso_auth'
   FLATTEN_RESULT_PDF_KEY = 'flatten_result_pdf'
+  ROTATE_INCREMENTAL_PDF_KEY = 'rotate_incremental_pdf'
   WITH_SIGNATURE_ID = 'with_signature_id'
   WITH_FILE_LINKS_KEY = 'with_file_links'
   WITH_SIGNATURE_ID_REASON_KEY = 'with_signature_id_reason'
@@ -59,6 +61,7 @@ class AccountConfig < ApplicationRecord
   POLICY_LINKS_KEY = 'policy_links'
   COMPANY_LOGO_URL_KEY = 'company_logo_url'
   SUBMITTER_INVITATION_SMS_KEY = 'submitter_invitation_sms'
+  ENABLE_MCP_KEY = 'enable_mcp'
 
   EMAIL_VARIABLES = {
     SUBMITTER_INVITATION_EMAIL_KEY => %w[template.name submitter.link account.name].freeze,

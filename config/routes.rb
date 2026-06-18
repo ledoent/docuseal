@@ -76,17 +76,20 @@ Rails.application.routes.draw do
   resources :submissions, only: %i[show destroy] do
     resources :unarchive, only: %i[create], controller: 'submissions_unarchive'
     resources :events, only: %i[index], controller: 'submission_events'
+    resources :download, only: %i[index], controller: 'submissions_download'
+    resources :resend_email, only: %i[create], controller: 'submissions_resend_email'
   end
   resources :submitters, only: %i[edit update]
   resources :console_redirect, only: %i[index]
   resources :upgrade, only: %i[index], controller: 'console_redirect'
   resources :manage, only: %i[index], controller: 'console_redirect'
-  resource :testing_account, only: %i[show destroy]
+  resource :testing_account, only: %i[create destroy]
   resources :testing_api_settings, only: %i[index]
   resources :submitters_autocomplete, only: %i[index]
   resources :submitters_resubmit, only: %i[update]
   resources :template_folders_autocomplete, only: %i[index]
   resources :webhook_secret, only: %i[show update]
+  resources :webhook_hmac, only: %i[show]
   resources :webhook_preferences, only: %i[update]
   resource :templates_upload, only: %i[create]
   authenticated do
@@ -101,6 +104,9 @@ Rails.application.routes.draw do
     resources :clone, only: %i[new create], controller: 'templates_clone'
     resource :debug, only: %i[show], controller: 'templates_debug' if Rails.env.development?
     resources :documents, only: %i[index create], controller: 'template_documents'
+    resources :documents_modify, only: %i[create], controller: 'template_documents_modify'
+    resources :documents_page_objects, only: %i[index], controller: 'template_documents_page_objects'
+    resources :documents_crop, only: %i[index create], controller: 'template_documents_crop'
     resources :clone_and_replace, only: %i[create], controller: 'templates_clone_and_replace'
     resources :detect_fields, only: %i[create], controller: 'templates_detect_fields' unless Docuseal.multitenant?
     resources :restore, only: %i[create], controller: 'templates_restore'
@@ -111,12 +117,14 @@ Rails.application.routes.draw do
     resource :form, only: %i[show], controller: 'templates_form_preview'
     resource :code_modal, only: %i[show], controller: 'templates_code_modal'
     resource :preferences, only: %i[show create destroy], controller: 'templates_preferences'
+    resources :versions, only: %i[index show create], controller: 'templates_versions'
     resource :share_link, only: %i[show create], controller: 'templates_share_link'
+    resource :share_link_qr, only: %i[show], controller: 'templates_share_link_qr'
     resources :recipients, only: %i[create], controller: 'templates_recipients'
     resources :prefillable_fields, only: %i[create], controller: 'templates_prefillable_fields'
     resources :submissions_export, only: %i[index new]
   end
-  resources :preview_document_page, only: %i[show], path: '/preview/:signed_uuid'
+  resources :preview_document_page, only: %i[show], path: '/preview/:signed_key'
   resource :blobs_proxy, only: %i[show], path: '/file/:signed_uuid/*filename',
                          controller: 'api/active_storage_blobs_proxy'
   resource :blobs_proxy, only: %i[show], path: '/blobs_proxy/:signed_uuid/*filename',
@@ -149,21 +157,28 @@ Rails.application.routes.draw do
   resources :submit_form, only: %i[show update], path: 's', param: 'slug' do
     resources :values, only: %i[index], controller: 'submit_form_values'
     resources :download, only: %i[index], controller: 'submit_form_download'
+    resources :documents, only: %i[index], controller: 'submit_form_completed_download'
     resources :decline, only: %i[create], controller: 'submit_form_decline'
+    resources :delegate, only: %i[create], controller: 'submit_form_delegate'
     resources :invite, only: %i[create], controller: 'submit_form_invite'
+    resources :metadata, only: %i[index], controller: 'submit_form_metadata'
+    resources :debug, only: %i[index], controller: 'submissions_debug' if Rails.env.development?
     get :completed
+    get :delegated
   end
 
   resources :submit_form_draw_signature, only: %i[show], path: 'p', param: 'slug'
 
   resources :submissions_preview, only: %i[show], path: 'e', param: 'slug' do
     get :completed
+    resources :download, only: %i[index], controller: 'submissions_preview_download'
   end
 
   resources :send_submission_email, only: %i[create]
 
-  resources :submitters, only: %i[], param: 'slug' do
-    resources :download, only: %i[index], controller: 'submissions_download'
+  resources :submitters, only: %i[] do
+    resources :download, only: %i[index], controller: 'submitters_download', constraints: { submitter_id: /\d+/ }
+    resources :download, only: %i[index], controller: 'submit_form_completed_download'
     resources :send_email, only: %i[create], controller: 'submitters_send_email'
     resources :send_sms, only: %i[create], controller: 'submitters_send_sms'
     resources :debug, only: %i[index], controller: 'submissions_debug' if Rails.env.development?
@@ -174,6 +189,7 @@ Rails.application.routes.draw do
       resources :storage, only: %i[index create], controller: 'storage_settings'
       resources :search_entries_reindex, only: %i[create]
       resources :sms, only: %i[index create], controller: 'sms_settings'
+      resources :mcp, only: %i[index new create destroy], controller: 'mcp_settings'
     end
     if Docuseal.demo? || !Docuseal.multitenant?
       resources :api, only: %i[index create], controller: 'api_settings'
@@ -206,6 +222,8 @@ Rails.application.routes.draw do
       end
     end
   end
+
+  match '/mcp', to: 'mcp#call', via: %i[get post]
 
   get '/js/:filename', to: 'embed_scripts#show', as: :embed_script
 

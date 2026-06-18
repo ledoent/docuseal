@@ -3,18 +3,12 @@
 class WebhookSecretController < ApplicationController
   load_and_authorize_resource :webhook_url, parent: false
 
-  def show
-    @webhook_url.ensure_signing_key!
-  end
+  def show; end
 
   def update
-    if params[:regenerate_signing_key]
-      @webhook_url.update!(signing_key: SecureRandom.hex(32))
-    else
-      @webhook_url.update!(secret: {
-        webhook_secret_params[:key] => webhook_secret_params[:value]
-      }.compact_blank)
-    end
+    @webhook_url.update!(secret: {
+      webhook_secret_params[:key] => webhook_secret_params[:value]
+    }.compact_blank)
 
     redirect_back(fallback_location: settings_webhook_path(@webhook_url),
                   notice: I18n.t('webhook_secret_has_been_saved'))

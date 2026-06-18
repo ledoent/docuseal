@@ -13,13 +13,9 @@ module SendWebhookRequest
 
   module_function
 
-  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+  # rubocop:disable Metrics/AbcSize
   def call(webhook_url, event_uuid:, event_type:, record:, data:, attempt: 0)
-    uri = begin
-      URI(webhook_url.url)
-    rescue URI::Error
-      Addressable::URI.parse(webhook_url.url).normalize
-    end
+    uri = parse_uri(webhook_url.url)
 
     if Docuseal.multitenant?
       raise HttpsError, 'Only HTTPS is allowed.' if (uri.scheme != 'https' || [443, nil].exclude?(uri.port)) &&
@@ -43,7 +39,9 @@ module SendWebhookRequest
         data: data
       }.to_json
 
-      sign_request(req, webhook_url)
+      if req.headers['X-Docuseal-Signature'].blank?
+        req.headers['X-Docuseal-Signature'] = WebhookUrls::Signatures.sign(webhook_url.hmac_secret, body: req.body)
+      end
 
       req.options.read_timeout = 15
       req.options.open_timeout = 8
@@ -55,16 +53,12 @@ module SendWebhookRequest
   rescue Faraday::Error => e
     handle_error(webhook_event, attempt:, error_message: e.message&.truncate(100))
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+  # rubocop:enable Metrics/AbcSize
 
-  def sign_request(req, webhook_url)
-    key = webhook_url.ensure_signing_key!
-    timestamp = Time.current.to_i.to_s
-    signature = OpenSSL::HMAC.hexdigest('SHA256', key, "#{timestamp}.#{req.body}")
-
-    req.headers['X-Webhook-Signature'] = "sha256=#{signature}"
-    req.headers['X-Webhook-Timestamp'] = timestamp
-    req.headers['X-Webhook-Request-Id'] = SecureRandom.uuid
+  def parse_uri(url)
+    URI(url)
+  rescue URI::Error
+    Addressable::URI.parse(url).normalize
   end
 
   def create_webhook_event(webhook_url, event_uuid:, event_type:, record:)

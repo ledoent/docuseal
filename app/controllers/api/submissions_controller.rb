@@ -54,6 +54,12 @@ module Api
 
       return render json: { error: 'Template not found' }, status: :unprocessable_content if @template.nil?
 
+      if @template.archived_at?
+        Rollbar.warning("Archived template submission: #{@template.id}") if defined?(Rollbar)
+
+        return render json: { error: 'Template has been archived' }, status: :unprocessable_content
+      end
+
       if @template.fields.blank?
         Rails.logger.warn("Template does not contain fields: #{@template.id}")
 
@@ -156,7 +162,7 @@ module Api
                                        params:)
       else
         submissions_attrs, attachments =
-          Submissions::NormalizeParamUtils.normalize_submissions_params!(submissions_params, template)
+          Submissions::NormalizeParamUtils.normalize_submissions_params!(submissions_params, template, purpose: :api)
 
         submissions = Submissions.create_from_submitters(
           template:,

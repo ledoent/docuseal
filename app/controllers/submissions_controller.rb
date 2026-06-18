@@ -26,7 +26,7 @@ class SubmissionsController < ApplicationController
     unless @submission.submitters.all?(&:completed_at?)
       ActiveRecord::Associations::Preloader.new(
         records: [@submission],
-        associations: [submitters: :start_form_submission_events]
+        associations: [{ submitters: :start_form_submission_events }]
       ).call
     end
 
@@ -38,6 +38,8 @@ class SubmissionsController < ApplicationController
   end
 
   def create
+    return redirect_to template_path(@template), alert: I18n.t('template_has_been_archived') if @template.archived_at?
+
     save_template_message(@template, params) if params[:save_message] == '1'
 
     [params.delete(:subject), params.delete(:body)] if params[:is_custom_message] != '1'
@@ -51,18 +53,7 @@ class SubmissionsController < ApplicationController
                                        emails: params[:emails],
                                        params: params.merge('send_completed_email' => true))
       else
-        submissions_attrs = submissions_params[:submission].to_h.values
-
-        submissions_attrs, _, new_fields =
-          Submissions::NormalizeParamUtils.normalize_submissions_params!(submissions_attrs, @template, add_fields: true)
-
-        Submissions.create_from_submitters(template: @template,
-                                           user: current_user,
-                                           source: :invite,
-                                           submitters_order: params[:preserve_order] == '1' ? 'preserved' : 'random',
-                                           submissions_attrs:,
-                                           new_fields:,
-                                           params: params.merge('send_completed_email' => true))
+        create_submissions(@template, submissions_params, params)
       end
 
     WebhookUrls.enqueue_events(submissions, 'submission.created')
@@ -96,6 +87,21 @@ class SubmissionsController < ApplicationController
   end
 
   private
+
+  def create_submissions(template, submissions_params, params)
+    submissions_attrs = submissions_params[:submission].to_h.values
+
+    submissions_attrs, _, new_fields =
+      Submissions::NormalizeParamUtils.normalize_submissions_params!(submissions_attrs, template, add_fields: true)
+
+    Submissions.create_from_submitters(template: template,
+                                       user: current_user,
+                                       source: :invite,
+                                       submitters_order: params[:preserve_order] == '1' ? 'preserved' : 'random',
+                                       submissions_attrs:,
+                                       new_fields:,
+                                       params: params.merge('send_completed_email' => true))
+  end
 
   def save_template_message(template, params)
     template.preferences['request_email_subject'] = params[:subject] if params[:subject].present?

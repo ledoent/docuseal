@@ -9,17 +9,25 @@ module Api
 
     before_action :set_cors_headers
     before_action :set_noindex_headers
+    before_action :set_security_headers
 
+    # rubocop:disable Metrics
     def show
       blob_uuid, purp, exp = ApplicationRecord.signed_id_verifier.verified(params[:signed_uuid])
 
       if blob_uuid.blank? || purp != 'blob'
-        Rails.logger.error('Blob not found')
+        Rollbar.error('Blob not found') if defined?(Rollbar)
 
         return head :not_found
       end
 
       blob = ActiveStorage::Blob.find_by!(uuid: blob_uuid)
+
+      if Submitters::DANGEROUS_EXTENSIONS.include?(blob.filename.extension.to_s.downcase)
+        Rollbar.error('Dangerous extension') if defined?(Rollbar)
+
+        return head :unprocessable_content
+      end
 
       attachment = blob.attachments.take
 
@@ -33,12 +41,19 @@ module Api
       else
         http_cache_forever public: true do
           response.headers['Accept-Ranges'] = 'bytes'
-          response.headers['Content-Length'] = blob.byte_size.to_s
 
-          send_blob_stream blob, disposition: params[:disposition]
+          if request.head?
+            response.headers['Content-Type'] = blob.content_type_for_serving
+            head :ok
+          else
+            send_blob_stream blob, disposition: params[:disposition]
+          end
+
+          response.headers['Content-Length'] = blob.byte_size.to_s
         end
       end
     end
+    # rubocop:enable Metrics
 
     private
 
@@ -56,8 +71,6 @@ module Api
 
         return if !require_ttl && !require_auth
       end
-
-      Rails.logger.error('Blob unauthorized')
 
       raise CanCan::AccessDenied
     end

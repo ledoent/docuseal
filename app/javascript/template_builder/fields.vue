@@ -1,19 +1,42 @@
 <template>
-  <div :class="withStickySubmitters ? 'sticky top-0 z-[1]' : ''">
+  <div
+    :class="withStickySubmitters ? 'sticky top-0 z-[1]' : ''"
+    :style="withStickySubmitters ? { backgroundColor } : {}"
+    class="flex items-center gap-1"
+  >
     <FieldSubmitter
       :model-value="selectedSubmitter.uuid"
       class="roles-dropdown w-full rounded-lg roles-dropdown"
-      :style="withStickySubmitters ? { backgroundColor } : {}"
       :submitters="submitters"
       :menu-style="{ overflow: 'auto', display: 'flex', flexDirection: 'row', maxHeight: 'calc(100vh - 120px)', backgroundColor: ['', null, 'transparent'].includes(backgroundColor) ? 'white' : backgroundColor }"
       :editable="editable && !defaultSubmitters.length"
       @new-submitter="save"
       @remove="removeSubmitter"
       @name-change="save"
-      @update:model-value="$emit('change-submitter', submitters.find((s) => s.uuid === $event))"
+      @update:model-value="[$emit('change-submitter', submitters.find((s) => s.uuid === $event)), isShowVariables = false]"
     />
+    <button
+      v-if="hasDynamicDocuments"
+      class="flex-shrink-0 rounded-md border hover:border-content flex items-center justify-center self-stretch"
+      :class="isShowVariables ? 'border-base-content bg-base-content text-base-100' : 'border-base-300'"
+      style="width: 44px"
+      :title="t('variables')"
+      @click.prevent="toggleVariables"
+    >
+      <IconBracketsContain
+        :width="22"
+        :height="22"
+        :stroke-width="1.6"
+      />
+    </button>
   </div>
+  <DynamicVariables
+    v-if="isShowVariables"
+    :editable="editable"
+    class="mt-1"
+  />
   <div
+    v-if="!isShowVariables"
     ref="fields"
     class="fields mt-2"
     :class="{ 'mb-1': !withCustomFields || !customFields.length }"
@@ -42,13 +65,33 @@
       @set-draw="$emit('set-draw', $event)"
     />
   </div>
-  <div v-if="submitterDefaultFields.length && editable">
-    <hr class="mb-2">
+  <div
+    v-if="editable && withCustomFieldsTab"
+    class="tabs w-full mb-1.5 custom-fields-tabs"
+  >
+    <a
+      class="tab tab-bordered w-1/2 border-base-300 custom-fields-tab"
+      :class="{ 'tab-active': !showCustomTab }"
+      :style="{ '--tab-border': showCustomTab ? '0px' : '0.5px' }"
+      @click="setFieldsTab('default')"
+    >{{ t('default') }}</a>
+    <a
+      class="tab tab-bordered w-1/2 border-base-300 custom-fields-tab"
+      :class="{ 'tab-active': showCustomTab }"
+      :style="{ '--tab-border': showCustomTab ? '0.5px' : '0px' }"
+      @click="setFieldsTab('custom')"
+    >{{ t('custom') }}</a>
+  </div>
+  <div v-if="!isShowVariables && submitterDefaultFields.length && editable && (!withCustomFieldsTab || showCustomTab)">
+    <hr
+      v-if="!withCustomFieldsTab"
+      class="mb-1.5"
+    >
     <template v-if="isShowFieldSearch">
       <input
         v-model="defaultFieldsSearch"
         :placeholder="t('search_field')"
-        class="input input-ghost input-xs px-0 text-base mb-2 !outline-0 !rounded bg-transparent w-full"
+        class="input input-ghost input-xs px-0 text-base mb-1.5 !outline-0 !rounded bg-transparent w-full"
       >
       <hr class="mb-2">
     </template>
@@ -110,7 +153,7 @@
     </div>
   </div>
   <div
-    v-if="editable && withCustomFields && (customFields.length || newCustomField)"
+    v-if="!isShowVariables && editable && withCustomFields && (customFields.length || newCustomField)"
     class="tabs w-full mb-1.5"
   >
     <a
@@ -127,7 +170,7 @@
     >{{ t('custom') }}</a>
   </div>
   <div
-    v-if="showCustomTab && editable && (customFields.length || newCustomField)"
+    v-if="!isShowVariables && showCustomTab && editable && (customFields.length || newCustomField)"
     ref="customFields"
     class="custom-fields"
     @dragover.prevent="onCustomFieldDragover"
@@ -195,7 +238,7 @@
     </div>
   </div>
   <div
-    v-if="editable && !onlyDefinedFields && (!showCustomTab || (!customFields.length && !newCustomField))"
+    v-if="!isShowVariables && editable && !onlyDefinedFields && (!showCustomTab || (!customFields.length && !newCustomField)) && (!withCustomFieldsTab || !showCustomTab)"
     id="field-types-grid"
     class="grid grid-cols-3 gap-1 pb-2 fields-grid"
   >
@@ -230,7 +273,7 @@
     </template>
   </div>
   <div
-    v-if="fields.length < 4 && editable && withHelp && !showTourStartForm"
+    v-if="!isShowVariables && fields.length < 4 && editable && withHelp && !showTourStartForm"
     class="text-xs p-2 border border-base-200 rounded"
   >
     <ul class="list-disc list-outside ml-3">
@@ -246,7 +289,7 @@
     </ul>
   </div>
   <div
-    v-if="withFieldsDetection && editable && fields.length < 2"
+    v-if="!isShowVariables && withFieldsDetection && editable && fields.length < 2 && !template.schema.some((item) => item.dynamic)"
     class="my-2"
   >
     <button
@@ -283,11 +326,11 @@
     </button>
   </div>
   <div
-    v-show="fields.length < 4 && editable && withHelp && showTourStartForm"
+    v-show="!isShowVariables && fields.length < 4 && editable && withHelp && showTourStartForm"
     class="rounded py-2 px-4 w-full border border-dashed border-base-300"
   >
     <div class="text-center text-sm">
-      {{ t('start_a_quick_tour_to_learn_how_to_create_an_send_your_first_document') }}
+      {{ t('start_a_quick_tour_to_learn_how_to_create_and_send_your_first_document') }}
     </div>
     <div class="flex justify-center">
       <label
@@ -306,7 +349,8 @@ import Field from './field'
 import CustomField from './custom_field'
 import FieldType from './field_type'
 import FieldSubmitter from './field_submitter'
-import { IconLock, IconCirclePlus, IconInnerShadowTop, IconSparkles } from '@tabler/icons-vue'
+import { defineAsyncComponent } from 'vue'
+import { IconLock, IconCirclePlus, IconInnerShadowTop, IconSparkles, IconBracketsContain } from '@tabler/icons-vue'
 import IconDrag from './icon_drag'
 import { v4 } from 'uuid'
 
@@ -321,7 +365,9 @@ export default {
     IconInnerShadowTop,
     FieldSubmitter,
     IconDrag,
-    IconLock
+    IconLock,
+    IconBracketsContain,
+    DynamicVariables: defineAsyncComponent(() => import(/* webpackChunkName: "dynamic-editor" */ './dynamic_variables'))
   },
   inject: ['save', 'backgroundColor', 'withPhone', 'withVerification', 'withKba', 'withPayment', 't', 'fieldsDragFieldRef', 'customDragFieldRef', 'baseFetch', 'selectedAreasRef', 'getFieldTypeIndex'],
   props: {
@@ -339,12 +385,22 @@ export default {
       required: false,
       default: false
     },
+    withCustomFieldsTab: {
+      type: Boolean,
+      required: false,
+      default: false
+    },
     withFieldsSearch: {
       type: Boolean,
       required: false,
       default: null
     },
     withFieldsDetection: {
+      type: Boolean,
+      required: false,
+      default: false
+    },
+    withDetectExistingFields: {
       type: Boolean,
       required: false,
       default: false
@@ -416,13 +472,18 @@ export default {
       type: Object,
       required: true
     },
+    detectCustomFieldsIndex: {
+      type: Object,
+      required: false,
+      default: () => ({})
+    },
     showTourStartForm: {
       type: Boolean,
       required: false,
       default: false
     }
   },
-  emits: ['add-field', 'set-draw', 'set-draw-type', 'set-draw-custom-field', 'set-drag', 'drag-end', 'scroll-to-area', 'change-submitter', 'set-drag-placeholder', 'select-submitter'],
+  emits: ['add-field', 'set-draw', 'set-draw-type', 'set-draw-custom-field', 'set-drag', 'drag-end', 'scroll-to-area', 'change-submitter', 'set-drag-placeholder', 'select-submitter', 'rebuild-variables-schema', 'remove-field', 'remove-submitter'],
   data () {
     return {
       fieldPagesLoaded: null,
@@ -430,12 +491,16 @@ export default {
       newCustomField: null,
       showCustomTab: false,
       defaultFieldsSearch: '',
-      customFieldsSearch: ''
+      customFieldsSearch: '',
+      isShowVariables: false
     }
   },
   computed: {
     fieldNames: FieldType.computed.fieldNames,
     fieldIcons: FieldType.computed.fieldIcons,
+    hasDynamicDocuments () {
+      return this.template.schema.some((item) => item.dynamic)
+    },
     numberOfPages () {
       return this.template.documents.reduce((acc, doc) => {
         return acc + doc.metadata?.pdf?.number_of_pages || doc.preview_images.length
@@ -474,7 +539,8 @@ export default {
     },
     submitterDefaultFields () {
       return this.defaultFields.filter((f) => {
-        return !this.submitterFields.find((field) => field.name === f.name) && (!f.role || f.role === this.selectedSubmitter.name)
+        return (this.withCustomFieldsTab ? true : !this.submitterFields.find((field) => field.name === f.name)) &&
+          (!f.role || f.role === this.selectedSubmitter.name)
       })
     },
     filteredSubmitterDefaultFields () {
@@ -503,6 +569,10 @@ export default {
     }
   },
   methods: {
+    toggleVariables () {
+      this.$emit('rebuild-variables-schema')
+      this.isShowVariables = !this.isShowVariables
+    },
     onDragstart (event, field) {
       this.removeDragOverlay(event)
 
@@ -528,6 +598,10 @@ export default {
       delete customField.submitter_uuid
       delete customField.prefillable
       delete customField.conditions
+
+      if (Array.isArray(customField.areas)) {
+        customField.areas = customField.areas.filter((area) => area.page !== null && area.page !== undefined)
+      }
 
       customField.areas?.forEach((area) => {
         delete area.attachment_uuid
@@ -565,6 +639,78 @@ export default {
         this.customFields.splice(0, this.customFields.length, ...fields)
       })
     },
+    buildExistingFields () {
+      const existing = []
+      const seen = new Set()
+
+      const submittersByUuid = this.template.submitters.reduce((acc, s) => {
+        acc[s.uuid] = s
+
+        return acc
+      }, {})
+
+      const add = (field, role) => {
+        if (!field?.name) return
+
+        const key = field.name.toLowerCase() + ':' + (role || '').toLowerCase()
+
+        if (seen.has(key)) return
+
+        seen.add(key)
+
+        const item = { name: field.name, type: field.type || 'text' }
+
+        if (role) item.role = role
+
+        const optionValues = Array.isArray(field.options)
+          ? field.options.map((o) => (typeof o === 'string' ? o : o?.value)).filter(Boolean)
+          : []
+
+        if (optionValues.length) item.options = optionValues
+
+        existing.push(item)
+      }
+
+      this.template.fields.forEach((f) => add(f, submittersByUuid[f.submitter_uuid]?.name))
+      this.defaultRequiredFields.forEach((f) => add(f, f.role))
+      this.defaultFields.forEach((f) => add(f, f.role))
+      this.customFields.forEach((f) => add(f, f.role))
+
+      return existing
+    },
+    enrichDetectedField (field) {
+      if (!this.withDetectExistingFields || !field.name) return field
+
+      const role = this.template.submitters.find((s) => s.uuid === field.submitter_uuid)?.name
+      const nameKey = field.name.toLowerCase()
+      const indexKey = [field.name, role].filter(Boolean).join(':').toLowerCase()
+
+      const customField = this.detectCustomFieldsIndex[indexKey] || this.detectCustomFieldsIndex[nameKey]
+
+      if (customField) this.applyCustomFieldAttributes(field, customField)
+
+      return field
+    },
+    applyCustomFieldAttributes (field, customField) {
+      const skipKeys = new Set(['uuid', 'areas', 'submitter_uuid', 'conditions', 'prefillable', 'role'])
+
+      Object.entries(customField).forEach(([key, value]) => {
+        if (skipKeys.has(key)) return
+        if (value === null || value === undefined) return
+
+        if (key === 'options') {
+          if (Array.isArray(value) && !Array.isArray(field.options)) {
+            field.options = value.map((o) => (
+              typeof o === 'string' ? { value: o, uuid: v4() } : { ...o, uuid: v4() }
+            ))
+          }
+        } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+          field[key] = JSON.parse(JSON.stringify(value))
+        } else {
+          field[key] = value
+        }
+      })
+    },
     detectFields () {
       const fields = []
 
@@ -574,7 +720,10 @@ export default {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        ...(this.withDetectExistingFields
+          ? { body: JSON.stringify({ fields: this.buildExistingFields() }) }
+          : {})
       }).then(async (response) => {
         const reader = response.body.getReader()
         const decoder = new TextDecoder('utf-8')
@@ -596,7 +745,7 @@ export default {
 
               if (data.error) {
                 if ((data.fields || fields).length) {
-                  this.template.fields = data.fields || fields
+                  this.template.fields = (data.fields || fields).map((f) => this.enrichDetectedField(f))
 
                   this.save()
                 } else {
@@ -614,7 +763,7 @@ export default {
                   this.$emit('select-submitter', this.template.submitters[0])
                 }
 
-                this.template.fields = data.fields || fields
+                this.template.fields = (data.fields || fields).map((f) => this.enrichDetectedField(f))
 
                 this.save()
 
@@ -714,6 +863,8 @@ export default {
         this.$emit('change-submitter', this.submitters[0])
       }
 
+      this.$emit('remove-submitter', submitter)
+
       this.save()
     },
     removeField (field, save = true) {
@@ -738,6 +889,8 @@ export default {
       field.areas?.forEach((area) => {
         this.selectedAreasRef.value.splice(this.selectedAreasRef.value.indexOf(area), 1)
       })
+
+      this.$emit('remove-field', field)
 
       if (save) {
         this.save()
